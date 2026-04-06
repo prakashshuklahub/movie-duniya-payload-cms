@@ -5,8 +5,8 @@ export const Movie: CollectionConfig = {
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req }) => false,
-    update: ({ req }) => req.user?.role === 'admin',
-    delete: ({ req }) => req.user?.role === 'admin',
+    update: ({ req }) => false,
+    delete: ({ req }) => false,
   },
   fields: [
     { name: 'title', type: 'text', required: true },

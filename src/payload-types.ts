@@ -68,7 +68,6 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
-    media: Media;
     movies: Movie;
     'movie-approvals': MovieApproval;
     'payload-kv': PayloadKv;
@@ -79,7 +78,6 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     movies: MoviesSelect<false> | MoviesSelect<true>;
     'movie-approvals': MovieApprovalsSelect<false> | MovieApprovalsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -149,25 +147,6 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "movies".
  */
 export interface Movie {
@@ -185,15 +164,9 @@ export interface Movie {
 export interface MovieApproval {
   id: string;
   title: string;
-  movieData: {
-    title: string;
-    description?: string | null;
-    releaseDate?: string | null;
-  };
+  description?: string | null;
+  releaseDate?: string | null;
   status?: ('pending' | 'approved' | 'rejected' | 'changes_required') | null;
-  /**
-   * Admin feedback for the editor. Only admins can edit; editors can read.
-   */
   comment?: string | null;
   submittedBy?: (string | null) | User;
   movie?: (string | null) | Movie;
@@ -227,10 +200,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: string | Media;
       } | null)
     | ({
         relationTo: 'movies';
@@ -307,24 +276,6 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "movies_select".
  */
 export interface MoviesSelect<T extends boolean = true> {
@@ -340,13 +291,8 @@ export interface MoviesSelect<T extends boolean = true> {
  */
 export interface MovieApprovalsSelect<T extends boolean = true> {
   title?: T;
-  movieData?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        releaseDate?: T;
-      };
+  description?: T;
+  releaseDate?: T;
   status?: T;
   comment?: T;
   submittedBy?: T;
