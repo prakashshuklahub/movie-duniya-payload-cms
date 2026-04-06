@@ -1,23 +1,20 @@
-## Movie Duniya (Payload CMS Backend)
+## Movie Approval CMS
 
-Backend for a movie catalogue website.
+Payload CMS project for **reviewing and publishing movies**. Editors submit entries for approval; admins approve or reject; approved titles are created in the **Movies** collection.
 
-- Frontend: Astro (separate repo)
-- CMS/API: Payload CMS (this repo)
-- Database: MongoDB
+- **Stack:** Payload CMS 3, Next.js (admin + API), MongoDB  
+- **Database:** MongoDB (connection string in `.env`)
 
-### What this repo does
+### Features
 
-- Provides an admin UI to **edit site pages** and **manage movies**
-- Supports a **movie approval workflow**
-  - Editors can submit new movies as **pending**
-  - Users with approval access can **approve**, then movies become visible in APIs
-- Exposes movie APIs used by the Astro frontend (list/detail/search)
-- Frontend handles **debounced search** to reduce API calls
+- **Movie approvals** — submit, review, approve/reject, request changes  
+- **Movies** — published records created when an approval is approved  
+- **Users** — roles (e.g. admin / editor) for who can submit vs review  
+- **REST / GraphQL** — standard Payload APIs for integrations (separate clients are outside this repo)
 
 ---
 
-## Developer quick start (clone + run)
+## Developer quick start
 
 ### 1) Clone
 
@@ -26,7 +23,7 @@ git clone <YOUR_REPO_URL> movie-duniya-admin
 cd movie-duniya-admin
 ```
 
-### 2) Configure env
+### 2) Environment
 
 ```bash
 cp .env.example .env
@@ -34,36 +31,31 @@ cp .env.example .env
 
 Set at least:
 
-- `MONGODB_URL` or `DATABASE_URL`
-- `PAYLOAD_SECRET`
+- `DATABASE_URL` (or `MONGODB_URL`) — MongoDB connection string  
+- `PAYLOAD_SECRET` — long random secret for Payload
 
-### 3) Start MongoDB
+### 3) MongoDB
 
-Local:
+Run MongoDB locally (or point `DATABASE_URL` at Atlas). Example on macOS:
 
 ```bash
 brew services start mongodb-community
 ```
 
-### 4) Install + run
+### 4) Install and run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open:
+Open **Admin:** `http://localhost:3000/admin` — create the first user on first visit.
 
-- Admin UI: `http://localhost:3000/admin`
-
-On first run, create the initial admin user.
-
----
-
-## After schema changes
-
-Run Payload type generation:
+### 5) After changing collections or globals
 
 ```bash
 npm run generate:types
+npm run generate:importmap
 ```
+
+Use when you add or change fields so `payload-types.ts` and the admin import map stay in sync.
