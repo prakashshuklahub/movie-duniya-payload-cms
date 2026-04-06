@@ -1,7 +1,7 @@
 {
-  "name": "movie-duniya-admin",
+  "name": "movie-approval-cms",
   "version": "1.0.0",
-  "description": "A blank template to get started with Payload 3.0",
+  "description": "Movie Approval CMS (Payload 3 + Next.js + MongoDB)",
   "license": "MIT",
   "type": "module",
   "scripts": {

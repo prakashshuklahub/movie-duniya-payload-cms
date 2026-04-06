@@ -1,5 +1,7 @@
 ## Movie Approval CMS
 
+**Repository:** [github.com/prakashshuklahub/movie-approval-cms](https://github.com/prakashshuklahub/movie-approval-cms)
+
 Payload CMS project for **reviewing and publishing movies**. Editors submit entries for approval; admins approve or reject; approved titles are created in the **Movies** collection.
 
 - **Stack:** Payload CMS 3, Next.js (admin + API), MongoDB  
@@ -19,8 +21,8 @@ Payload CMS project for **reviewing and publishing movies**. Editors submit entr
 ### 1) Clone
 
 ```bash
-git clone <YOUR_REPO_URL> movie-duniya-admin
-cd movie-duniya-admin
+git clone https://github.com/prakashshuklahub/movie-approval-cms.git
+cd movie-approval-cms
 ```
 
 ### 2) Environment
