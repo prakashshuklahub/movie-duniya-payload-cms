@@ -184,12 +184,16 @@ export interface Movie {
  */
 export interface MovieApproval {
   id: string;
+  title: string;
   movieData: {
     title: string;
     description?: string | null;
     releaseDate?: string | null;
   };
   status?: ('pending' | 'approved' | 'rejected' | 'changes_required') | null;
+  /**
+   * Admin feedback for the editor. Only admins can edit; editors can read.
+   */
   comment?: string | null;
   submittedBy?: (string | null) | User;
   movie?: (string | null) | Movie;
@@ -335,6 +339,7 @@ export interface MoviesSelect<T extends boolean = true> {
  * via the `definition` "movie-approvals_select".
  */
 export interface MovieApprovalsSelect<T extends boolean = true> {
+  title?: T;
   movieData?:
     | T
     | {

@@ -1,20 +1,67 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Where } from 'payload'
 
 export const MovieApprovals: CollectionConfig = {
   slug: 'movie-approvals',
+  admin: {
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'status', 'submittedBy', 'createdAt'],
+  },
   access: {
     read: ({ req }) => Boolean(req.user),
     create: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'editor',
-    update: ({ req }) => req.user?.role === 'admin',
+    update: ({ req }): boolean | Where => {
+      const user = req.user
+      if (!user) return false
+      // Admins: edit until approved/rejected (not final)
+      if (user.role === 'admin') {
+        return {
+          status: {
+            not_in: ['approved', 'rejected'],
+          },
+        }
+      }
+      // Editors: only their own submission, and only while admin asked for changes
+      if (user.role === 'editor') {
+        return {
+          and: [
+            { status: { equals: 'changes_required' } },
+            { submittedBy: { equals: user.id } },
+          ],
+        }
+      }
+      return false
+    },
     delete: ({ req }) => req.user?.role === 'admin',
   },
   hooks: {
     beforeChange: [
-      ({ data, req, operation }) => {
-        if (operation !== 'create') return data
+      ({ data, req, operation, originalDoc }) => {
+        // Mirror movie title to a top-level field for admin list/title usage
+        const nextTitle = data?.movieData?.title
+
+        if (operation !== 'create') {
+          // Editor resubmitting after "changes required" → back to pending for admin review
+          if (
+            req.user?.role === 'editor' &&
+            originalDoc?.status === 'changes_required' &&
+            originalDoc?.submittedBy === req.user?.id
+          ) {
+            return {
+              ...data,
+              title: nextTitle ?? data?.title,
+              status: 'pending',
+            }
+          }
+
+          return {
+            ...data,
+            title: nextTitle ?? data?.title,
+          }
+        }
 
         return {
           ...data,
+          title: nextTitle,
           submittedBy: req.user?.id,
           // Editors always submit as pending (and never choose status)
           status: req.user?.role === 'editor' ? 'pending' : (data?.status ?? 'pending'),
@@ -42,6 +89,7 @@ export const MovieApprovals: CollectionConfig = {
             id: doc.id,
             data: { movie: created.id },
             req,
+            context: { fromApprovalHook: true },
           })
         }
       },
@@ -49,43 +97,77 @@ export const MovieApprovals: CollectionConfig = {
   },
   fields: [
     {
-      name: 'movieData',
-      type: 'group',
-      fields: [
-        { name: 'title', type: 'text', required: true },
-        { name: 'description', type: 'textarea' },
-        { name: 'releaseDate', type: 'date' },
-      ],
-    },
-    {
-      name: 'status',
-      type: 'select',
-      options: [
-        { label: 'Pending', value: 'pending' },
-        { label: 'Approved', value: 'approved' },
-        { label: 'Rejected', value: 'rejected' },
-        { label: 'Changes Required', value: 'changes_required' },
-      ],
-      defaultValue: 'pending',
+      name: 'title',
+      type: 'text',
+      required: true,
       admin: {
-        condition: (_data, _siblingData, { user }) => user?.role === 'admin',
+        hidden: true,
       },
     },
     {
-      name: 'comment',
-      type: 'textarea',
-      admin: {
-        // Hide on create for editors; allow viewing later (and admins always see it)
-        condition: (data, _siblingData, { user }) =>
-          user?.role === 'admin' || (user?.role === 'editor' && Boolean(data?.id)),
-      },
+      type: 'tabs',
+      tabs: [
+        {
+          label: 'Movie Details',
+          fields: [
+            {
+              name: 'movieData',
+              type: 'group',
+              fields: [
+                { name: 'title', type: 'text', required: true },
+                { name: 'description', type: 'textarea' },
+                { name: 'releaseDate', type: 'date' },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Approval',
+          admin: {
+            condition: (data, _siblingData, { user }) =>
+              user?.role === 'admin' ||
+              (user?.role === 'editor' &&
+                (data?.status === 'changes_required' ||
+                  (data?.status === 'pending' && Boolean(data?.comment)))),
+          },
+          fields: [
+            {
+              name: 'status',
+              type: 'select',
+              options: [
+                { label: 'Pending', value: 'pending' },
+                { label: 'Approved', value: 'approved' },
+                { label: 'Rejected', value: 'rejected' },
+                { label: 'Changes Required', value: 'changes_required' },
+              ],
+              defaultValue: 'pending',
+              admin: {
+                condition: (_data, _siblingData, { user }) => user?.role === 'admin',
+              },
+            },
+            {
+              name: 'comment',
+              type: 'textarea',
+              access: {
+                update: ({ req }) => req.user?.role === 'admin',
+              },
+              admin: {
+                description:
+                  'Admin feedback for the editor. Only admins can edit; editors can read.',
+              },
+            },
+          ],
+        },
+      ],
     },
     {
       name: 'submittedBy',
       type: 'relationship',
       relationTo: 'users',
       admin: {
-        hidden: true,
+        readOnly: true,
+        position: 'sidebar',
+        condition: (_data, _siblingData, { user }) => user?.role === 'admin',
       },
     },
     {
@@ -93,7 +175,9 @@ export const MovieApprovals: CollectionConfig = {
       type: 'relationship',
       relationTo: 'movies',
       admin: {
-        hidden: true,
+        readOnly: true,
+        position: 'sidebar',
+        condition: (_data, _siblingData, { user }) => user?.role === 'admin',
       },
     },
   ],
